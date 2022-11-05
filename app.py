@@ -23,7 +23,7 @@ jwt = JWTManager(app)
 class Pharmacist(db.Model):
     __tablename__ = 'pharmacist'
 
-    pharmacistid = db.Column(db.Integer, primary_key=True)
+    pharmacist_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     emailid = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
@@ -31,47 +31,48 @@ class Pharmacist(db.Model):
 
 class PharmacistSchema(ma.Schema):
     class Meta:
-        fields = ('pharmacistid', 'name', 'emailid', 'password', 'is_admin')
+        fields = ('pharmacist_id', 'name', 'emailid', 'password', 'is_admin')
 
 class MedicineList(db.Model):
     __tablename__ = 'medicinelist'
 
-    medid = db.Column(db.Integer, primary_key=True)
-    medname = db.Column(db.String)
-    medtype = db.Column(db.String, nullable=False)
-    meddose = db.Column(db.String, nullable=False)
+    med_id = db.Column(db.Integer, primary_key=True)
+    med_name = db.Column(db.String)
+    med_type = db.Column(db.String, nullable=False)
+    med_dose = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
+    med_rel = db.relationship('MedicineStock',backref='medicinelist',cascade = 'all, delete-orphan', lazy = 'dynamic')
 
 class MedicineListSchema(ma.Schema):
     class Meta:
-        fields = ('medid', 'medname', 'medtype', 'meddose', 'description')
+        fields = ('med_id', 'med_name', 'med_type', 'med_dose', 'description')
 
 class MedicineStock(db.Model):
     __tablename__ = 'medicinestock'
 
-    medStockId = db.Column(db.Integer, primary_key=True)
-    medid = db.Column(db.Integer, primary_key=True)
-    PricePerUnit = db.Column(db.Numeric)
+    med_StockId = db.Column(db.Integer, primary_key=True)
+    med_id = db.Column(db.Integer, db.ForeignKey('medicinelist.med_id'),nullable=False)
+    Price_Per_Unit = db.Column(db.Numeric)
     Expiry = db.Column(db.String, nullable=False)
     meddose = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
 
 class MedicineStockSchema(ma.Schema):
     class Meta:
-        fields = ('medStockId', 'medid', 'PricePerUnit', 'Expiry', 'meddose','description')
+        fields = ('med_StockId', 'med_id', 'Price_Per_Unit', 'Expiry', 'meddose','description')
 
 class PurchaseOrder(db.Model):
     __tablename__ = 'purchaseorder'
 
-    purchaseorderid = db.Column(db.Integer, primary_key=True)
-    medstockid = db.Column(db.Integer, primary_key=True)
-    pharmacistid = db.Column(db.Numeric)
+    purchaseorder_id = db.Column(db.Integer, primary_key=True)
+    med_stockid = db.Column(db.Integer, primary_key=True)
+    pharmacist_id = db.Column(db.Numeric)
     price = db.Column(db.String, nullable=False)
     quantity = db.Column(db.String, nullable=False)
     
 class PurchaseOrderSchema(ma.Schema):
     class Meta:
-        fields = ('purchaseorderid', 'medstockid', 'pharmacistid', 'price', 'meddose','quantity')
+        fields = ('purchaseorder_id', 'med_stockid', 'pharmacist_id', 'price', 'meddose','quantity')
 
 
 
@@ -92,15 +93,17 @@ def drop_db():
 @app.cli.command('seedpharmtables')
 def seed_db():
     users = [
-        User(
-            email='admin@spam.com',
-            password=bcrypt.generate_password_hash('eggs').decode('utf-8'),
-            is_admin=True
+        Pharmacist(            
+            name = 'admin',
+            emailid = 'admin@pharm.com',
+            password = bcrypt.generate_password_hash('abcd').decode('utf-8'),
+            is_admin = True
         ),
-        User(
-            name='John Cleese',
-            email='someone@spam.com',
-            password=bcrypt.generate_password_hash('12345').decode('utf-8')
+        Pharmacist(
+            name = 'steffy',
+            emailid = 'steffy@pharm.com',
+            password = bcrypt.generate_password_hash('abcd').decode('utf-8'),
+            is_admin = True
         )
     ]
 
@@ -148,25 +151,27 @@ def seed_db():
 
 #Display medicine stock
 @app.route('/medstock/')
+def display_stock():
+    pass
+
 
 #Display List of medicines and its details
 @app.route('/medlist/')
+def display_medlist():
+    pass
 
 
 #Insert medicine to stock
 @app.route('/addmedtostock/')
-
+def add_med():
+    pass
 
 #Update Pharmacist information
 @app.route('/updatepharmacistinfo/')
+def update_pharm():
+    pass
 
 #Delete medicine from stock
 @app.route('/deletemedicinefromstock/')
-
-
-
-
-
-
-
-
+def delete_medicine():
+    pass
