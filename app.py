@@ -10,7 +10,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 app = Flask(__name__)
 
 app.config ['JSON_SORT_KEYS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://steffy:password@127.0.0.1:5432/trello_dev'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://steffy:password@127.0.0.1:5432/pharmacymanagement'
 app.config['JWT_SECRET_KEY'] = 'hello there'
 
 
@@ -28,6 +28,7 @@ class Pharmacist(db.Model):
     emailid = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    pharm_rel = db.relationship('PurchaseOrder',backref='purchaseorder',cascade = 'all, delete-orphan', lazy = 'dynamic')
 
 class PharmacistSchema(ma.Schema):
     class Meta:
@@ -55,7 +56,8 @@ class MedicineStock(db.Model):
     Price_Per_Unit = db.Column(db.Numeric)
     Expiry = db.Column(db.String, nullable=False)
     meddose = db.Column(db.String, nullable=False)
-    description = db.Column(db.String)
+    description = db.Column(db.String)    
+    medstock_rel = db.relationship('PurchaseOrder',backref='purchaseorder1',cascade = 'all, delete-orphan', lazy = 'dynamic')
 
 class MedicineStockSchema(ma.Schema):
     class Meta:
@@ -65,10 +67,10 @@ class PurchaseOrder(db.Model):
     __tablename__ = 'purchaseorder'
 
     purchaseorder_id = db.Column(db.Integer, primary_key=True)
-    med_stockid = db.Column(db.Integer, primary_key=True)
-    pharmacist_id = db.Column(db.Numeric)
-    price = db.Column(db.String, nullable=False)
-    quantity = db.Column(db.String, nullable=False)
+    med_stockid = db.Column(db.Integer, db.ForeignKey('medicinestock.med_StockId'),nullable=False)
+    pharmacist_id = db.Column(db.Integer,db.ForeignKey('pharmacist.pharmacist_id'),nullable=False)
+    price = db.Column(db.Numeric, nullable=False)
+    quantity = db.Column(db.Numeric, nullable=False)
     
 class PurchaseOrderSchema(ma.Schema):
     class Meta:
@@ -92,14 +94,16 @@ def drop_db():
 
 @app.cli.command('seedpharmtables')
 def seed_db():
-    users = [
-        Pharmacist(            
+    pharmacists = [
+        Pharmacist(
+            pharmacist_id = 1,            
             name = 'admin',
             emailid = 'admin@pharm.com',
             password = bcrypt.generate_password_hash('abcd').decode('utf-8'),
             is_admin = True
         ),
         Pharmacist(
+            pharmacist_id = 2,
             name = 'steffy',
             emailid = 'steffy@pharm.com',
             password = bcrypt.generate_password_hash('abcd').decode('utf-8'),
@@ -107,39 +111,92 @@ def seed_db():
         )
     ]
 
-    cards = [
-        Card(
-            title = 'Start the project',
-            description = 'Stage 1 - Create the database',
-            status = 'To Do',
-            priority = 'High',
-            date = date.today()
+    medicinelist = [
+        MedicineList(
+            med_id = 1,
+            med_name = 'PANADOL STRIP 10',
+            med_type = 'Paracetamol',
+            med_dose = '500Mg',
+            description = 'Paracetamol'
         ),
-        Card(
-            title = "SQLAlchemy",
-            description = "Stage 2 - Integrate ORM",
-            status = "Ongoing",
-            priority = "High",
-            date = date.today()
+        MedicineList(
+            med_id = 2,
+            med_name = 'NUROFEN STRIP 15',
+            med_type = 'IBUPROFEN',
+            med_dose = '100Mg',
+            description = 'IBUPROFEN'
         ),
-        Card(
-            title = "ORM Queries",
-            description = "Stage 3 - Implement several queries",
-            status = "Ongoing",
-            priority = "Medium",
-            date = date.today()
+        MedicineList(
+            med_id = 3,
+            med_name = 'METFORMIN SZ 500mg TAB 100',
+            med_type = 'Generic',
+            med_dose = '100Mg',
+            description = 'METFORMIN'
         ),
-        Card(
-            title = "Marshmallow",
-            description = "Stage 4 - Implement Marshmallow to jsonify models",
-            status = "Ongoing",
-            priority = "Medium",
-            date = date.today()
+        MedicineList(
+            med_id = 4,
+            med_name = 'TADALAFIL SDZ 20MG 8 TABLETS',
+            med_type = 'Generic',
+            med_dose = '100Mg',
+            description = 'TADALAFIL'
         )
     ]
 
-    db.session.add_all(cards)
-    db.session.add_all(users)
+    medicinestock = [
+        MedicineStock(
+            med_StockId = 1,
+            med_id = 1,
+            Price_Per_Unit = 15,
+            Expiry = '25-DEC-2022',
+            meddose = '1 per day',
+            description = 'Paracetamol'                
+        ),
+        MedicineStock(
+            med_StockId = 2,
+            med_id = 2,
+            Price_Per_Unit = 10,
+            Expiry = '1-DEC-2022',
+            meddose = '2 per day',
+            description = 'IBUPROFEN'   
+        ),
+        MedicineStock(
+            med_StockId = 3,
+            med_id = 3,
+            Price_Per_Unit = 10,
+            Expiry = '22-DEC-2022',
+            meddose = '1 per day',
+            description = 'METFORMIN'   
+        ),
+        MedicineStock(
+            med_StockId = 4,
+            med_id = 4,
+            Price_Per_Unit = 15,
+            Expiry = '31-DEC-2022',
+            meddose = '3 per day',
+            description = 'TADALAFIL'               
+        )
+    ]
+
+    purchaseorder = [
+        PurchaseOrder(            
+            med_stockid = 1,
+            pharmacist_id = 2,
+            price = 30,
+            quantity = 2
+        ),
+        PurchaseOrder(
+            med_stockid = 1,
+            pharmacist_id = 2,
+            price = 45,
+            quantity = 3
+        )
+
+    ]
+
+    db.session.add_all(pharmacists)
+    db.session.add_all(medicinelist)
+    db.session.add_all(medicinestock)
+    db.session.add_all(purchaseorder)
     db.session.commit()
     print('Tables seeded')
 
