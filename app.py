@@ -227,6 +227,7 @@ def display_medlist():
     #Retun the data in JSON format
     return jsonify(result)
 
+
 #Insert medicine to stock
 @app.route('/addmedtostock/', methods = ['POST'])
 def add_med():
@@ -245,7 +246,10 @@ def add_med():
         # Respond to client
         return {'Success':'Successfully committed'},201
     except IntegrityError:
-        return {'error':'error'},400
+        return {'error':' The values provided is not satifying the integrity constraints'},400
+    except:
+        return {'error': 'Invalid Input'},400
+
 
 #Update Pharmacist information
 @app.route('/updatepharmacistinfo/', methods = ['POST'])
@@ -256,7 +260,7 @@ def update_pharm():
             name = request.json['name'],
             emailid = request.json['email']
         )
-        if db.session.query(Pharmacist).filter_by(Pharmacist.pharmacist_id==pharm.pharmacist_id).count() > 0:
+        if db.session.query(Pharmacist).filter( Pharmacist.pharmacist_id == pharm.pharmacist_id).count() > 0:
             db.session.query(Pharmacist).filter(Pharmacist.pharmacist_id==pharm.pharmacist_id).update({Pharmacist.name : pharm.name,Pharmacist.emailid : pharm.emailid},synchronize_session = False)
         else:
             return {'Not_found':'Matching records not found'},400
@@ -264,8 +268,11 @@ def update_pharm():
         # Respond to client
         return {'Success':'Successfully committed'},201
     except IntegrityError:
-        return {'error':'error'},400
+        return {'error':' The values provided is not satifying the integrity constraints'},400
+    except:
+        return {'error': 'Invalid Input'},400    
 
+        
 #Delete medicine from stock
 @app.route('/deletemedicinefromstock/',methods = ['POST'])
 def delete_medicine():
@@ -274,13 +281,18 @@ def delete_medicine():
             med_StockId = request.json['stockid']
         )
         #Add and command the medicine to DB
-        x = db.session.query(MedicineStock).get(med.med_StockId)
+        if db.session.query(MedicineStock).filter( MedicineStock.med_StockId == med.med_StockId).count() > 0:
+            x = db.session.query(MedicineStock).get(med.med_StockId)
+        else:
+            return {'Not_found':'Matching records not found'},400            
         db.session.delete(x)
         db.session.commit()
         # Respond to client
         return {'Success':'Successfully deleted'},201
     except IntegrityError:
-        return {'error':'error'},400
+        return {'error':' The values provided is not satifying the integrity constraints'},400
+    except:
+        return {'error': 'Invalid Input'},400
 
 @app.route('/')
 def index():
