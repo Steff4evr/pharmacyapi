@@ -1,0 +1,16 @@
+ADd
+{
+    "stockid" : "6",
+    "medid" : 20,
+    "price" : 15,
+    "expiry" : "20-Dec-2022",
+    "meddose" :"1mg",
+    "description" : "test"
+}
+
+Update
+{
+    "pharmacist_id" : "1",
+    "name" : "joey",
+    "email" : "joey@gmail.com"    
+}

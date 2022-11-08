@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import update
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 
@@ -53,7 +54,7 @@ class MedicineStock(db.Model):
 
     med_StockId = db.Column(db.Integer, primary_key=True)
     med_id = db.Column(db.Integer, db.ForeignKey('medicinelist.med_id'),nullable=False)
-    Price_Per_Unit = db.Column(db.Numeric)
+    Price_Per_Unit = db.Column(db.Numeric,nullable = False)
     Expiry = db.Column(db.String, nullable=False)
     meddose = db.Column(db.String, nullable=False)
     description = db.Column(db.String)    
@@ -203,32 +204,87 @@ def seed_db():
 
     ################################################################
 
-
-
-
 #Display medicine stock
 @app.route('/medstock/')
 def display_stock():
-    pass
 
+    medicine_stock_schema = MedicineStockSchema(many=True)
+    #Fetch all records for medicine stock
+    med_stock = MedicineStock.query.all()
+    #Convert the nedicine stock data from database into a JSON format and store them in result variable.
+    result = medicine_stock_schema.dump(med_stock)
+    #return the data in JSON format
+    return jsonify(result)
 
 #Display List of medicines and its details
 @app.route('/medlist/')
 def display_medlist():
-    pass
-
+    medicine_list_schema = MedicineListSchema(many=True)
+    #Fetch all the records of the medicines
+    med_list = MedicineList.query.all()
+    # convert the medicine list data from db into JSON format and store them in result variable
+    result = medicine_list_schema.dump(med_list)
+    #Retun the data in JSON format
+    return jsonify(result)
 
 #Insert medicine to stock
-@app.route('/addmedtostock/')
+@app.route('/addmedtostock/', methods = ['POST'])
 def add_med():
-    pass
+    try:        
+        med = MedicineStock( 
+            med_StockId = request.json['stockid'],
+            med_id = request.json['medid'],
+            Price_Per_Unit = request.json['price'],
+            Expiry = request.json['expiry'],
+            meddose = request.json['meddose'],
+            description = request.json['description']
+        )
+        #Add and command the medicine to DB
+        db.session.add(med)
+        db.session.commit()
+        # Respond to client
+        return {'Success':'Successfully committed'},201
+    except IntegrityError:
+        return {'error':'error'},400
 
 #Update Pharmacist information
-@app.route('/updatepharmacistinfo/')
+@app.route('/updatepharmacistinfo/', methods = ['POST'])
 def update_pharm():
-    pass
+    try:        
+        pharm = Pharmacist( 
+            pharmacist_id = request.json['pharmacist_id'],
+            name = request.json['name'],
+            emailid = request.json['email']
+        )
+        if db.session.query(Pharmacist).filter_by(Pharmacist.pharmacist_id==pharm.pharmacist_id).count() > 0:
+            db.session.query(Pharmacist).filter(Pharmacist.pharmacist_id==pharm.pharmacist_id).update({Pharmacist.name : pharm.name,Pharmacist.emailid : pharm.emailid},synchronize_session = False)
+        else:
+            return {'Not_found':'Matching records not found'},400
+        db.session.commit()
+        # Respond to client
+        return {'Success':'Successfully committed'},201
+    except IntegrityError:
+        return {'error':'error'},400
 
 #Delete medicine from stock
-@app.route('/deletemedicinefromstock/')
+@app.route('/deletemedicinefromstock/',methods = ['POST'])
 def delete_medicine():
-    pass
+    try:        
+        med = MedicineStock( 
+            med_StockId = request.json['stockid']
+        )
+        #Add and command the medicine to DB
+        x = db.session.query(MedicineStock).get(med.med_StockId)
+        db.session.delete(x)
+        db.session.commit()
+        # Respond to client
+        return {'Success':'Successfully deleted'},201
+    except IntegrityError:
+        return {'error':'error'},400
+
+@app.route('/')
+def index():
+    return "Hello World!"
+
+
+
