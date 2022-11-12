@@ -259,14 +259,15 @@ def seed_db():
 #                           ENDPOINTS                          #
 ################################################################
 
-#
+#Register Pharmacists to the applications
 @app.route('/auth/register/', methods=['POST'])
-#@jwt_required()
+@jwt_required()
 def auth_register():
     try:
         # Register new pharmacist user
         user = Pharmacist(
             emailid=request.json['emailid'],
+            #encrypted password
             password=bcrypt.generate_password_hash(
                 request.json['password']).decode('utf8'),
             name=request.json['name']
@@ -277,18 +278,18 @@ def auth_register():
         # Respond to client
         return PharmacistSchema(exclude=['password']).dump(user), 201
     except IntegrityError:
+        #Raise error incase email is already in use
         return {'error': 'Email address already in use'}, 409
 
-# User login and authentication
-
-
+# Pharmacist login and authentication
 @app.route('/auth/login/', methods=['POST'])
 def auth_login():
     # Find a user by email address
     stmt = db.select(Pharmacist).filter_by(emailid=request.json['emailid'])
     user = db.session.scalar(stmt)
-    # If user exists and password is correct
+    # Check if user exists and password is correct
     if user and bcrypt.check_password_hash(user.password, request.json['password']):
+        #create token for access autherntication
         token = create_access_token(identity=str(
             user.pharmacist_id), expires_delta=timedelta(days=1))
         return {'email': user.emailid, 'token': token}
@@ -296,21 +297,17 @@ def auth_login():
         return {'error': 'Invalid email or password'}, 401
 
 # Display medicine stock
-
-
 @app.route('/medstock/')
 def display_stock():
     medicine_stock_schema = MedicineStockSchema(many=True)
     # Fetch all records for medicine stock
     med_stock = MedicineStock.query.order_by(MedicineStock.med_stockid).all()
-    # Convert the nedicine stock data from database into a JSON format and store them in result variable.
+    # Convert the medicine stock data from database into a JSON format and store them in result variable.
     result = medicine_stock_schema.dump(med_stock)
     # return the data in JSON format
     return jsonify(result)
 
 # Display List of medicines and its details
-
-
 @app.route('/medlist/')
 def display_medlist():
     medicine_list_schema = MedicineListSchema(many=True)
@@ -322,15 +319,13 @@ def display_medlist():
     return jsonify(result)
 
 # Display purchase orders
-
-
 @app.route('/purchaseorder/')
 def display_po():
     po_schema = PurchaseOrderSchema(many=True)
     # Fetch all the records of the medicines
     po_list = PurchaseOrder.query.order_by(
         desc(PurchaseOrder.purchaseorder_id)).all()
-    # convert the medicine list data from db into JSON format and store them in result variable
+    # convert the purchase order data from db into JSON format and store them in result variable
     result = po_schema.dump(po_list)
     # Retun the data in JSON format
     return jsonify(result)
@@ -359,10 +354,9 @@ def update_pharm():
     except:
         return {'error': 'Invalid Input'}, 400
 
-# Insert medicine to stock
-
-
+# Add medicine to stock
 @app.route('/addmedtostock/', methods=['POST'])
+#Only verified users are allowed to add the medicines
 @jwt_required()
 def add_med():
     try:
@@ -372,6 +366,7 @@ def add_med():
             quantity=request.json['quantity'],
             description=request.json['description']
         )
+        #check if the medicine is part of the master list else return with message
         if db.session.query(MedicineList).filter(MedicineList.med_id == med.med_id).count() == 0:
             return {'Not_found': 'Medicine id is invalid, Please enter a valid medicine that is present in the medicine list'}, 400
         # Add and command the medicine to DB
@@ -380,6 +375,7 @@ def add_med():
         # Respond to client
         return {'Success': 'Successfully committed'}, 201
     except IntegrityError:
+        #Raise integrity error if the medicine is already in stock. 
         return {'error': 'The medicine that you are trying to add is already present in stock. Try updating the quantity of the existing item in stock'}, 400
     except:
         return {'error': 'Invalid Input'}, 400
@@ -387,6 +383,7 @@ def add_med():
 
 # Update medicine  stock
 @app.route('/updatemedicinestock/', methods=['POST'])
+#Only verified users can update the stock
 @jwt_required()
 def update_medicine():
     try:
@@ -400,9 +397,11 @@ def update_medicine():
             return {'Value error': 'The quantity or price has to be valid positve numbers'}, 400
         # Check if the stock record is already present.
         elif db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med.med_stockid).count() > 0:
+            #update the stock
             db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med.med_stockid).update(
                 {MedicineStock.price_per_unit: med.price_per_unit, MedicineStock.quantity: med.quantity}, synchronize_session=False)
         else:
+            #return error message if there are no matching medicines
             return {'Not_found': 'There are no matching medicine to  update in stock'}, 400
         db.session.commit()
         # Respond to client
@@ -413,9 +412,8 @@ def update_medicine():
         return {'error': 'Invalid Input'}, 400
 
 # Add to PurchaseOrder - This endpoint is used to handle customer purchase orders.
-
-
-@app.route('/createpurchaseorder/', methods=['POST'])
+@app.route('/purchaseorder/', methods=['POST'])
+#Only verified users are allowed to create purchaseorder
 @jwt_required()
 def createpurchaseorder():
     try:
@@ -447,7 +445,7 @@ def createpurchaseorder():
             med.med_stockid = med_stockid
             # Calculate the price for the purchased quantity
             med.price = price * med.quantity
-            # Update the Medicine stock with the updated quantity
+            # Update the Medicine stock with the reduced quantity
             db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med_stockid).update(
                 {MedicineStock.quantity:  MedicineStock.quantity - med.quantity}, synchronize_session=False)
         # Add and command the medicine to DB
@@ -460,7 +458,7 @@ def createpurchaseorder():
     except:
         return {'error': 'Invalid Input'}, 400
 
-
+#Home page of the app
 @app.route('/')
 def index():
     return "WELCOME TO STEFFS PHARMACY!"
