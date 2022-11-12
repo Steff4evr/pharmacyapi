@@ -10,9 +10,10 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 
 app = Flask(__name__)
 
+#Setup configurations for the app
 app.config['JSON_SORT_KEYS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://steffy:password@127.0.0.1:5432/pharmacymanagement'
-app.config['JWT_SECRET_KEY'] = 'hello there'
+app.config['JWT_SECRET_KEY'] = 'Steffys Pharmacy Management'
 
 
 db = SQLAlchemy(app)
@@ -20,18 +21,25 @@ ma = Marshmallow(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
-
+#Model for Pharmacist. 
+#It contains the Pharmacists that use the pharmacy management system
 class Pharmacist(db.Model):
+#Table name 
     __tablename__ = 'pharmacist'
 
+#Field names for the pharmacist table
+
+#Primary key
     pharmacist_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
+#email which should be unique    
     emailid = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
+#Foreign key reference to the Pharmacist ID     
     pharm_rel = db.relationship(
         'PurchaseOrder', backref='purchaseorder', cascade='all, delete-orphan', lazy='dynamic')
 
-
+#Schema
 class PharmacistSchema(ma.Schema):
     class Meta:
         fields = ('pharmacist_id', 'name', 'emailid', 'password', 'is_admin')
@@ -295,7 +303,8 @@ def update_pharm():
         return {'Success': 'Successfully committed'}, 201
     except IntegrityError:
         return {'error': ' The email id is already in use. Please enter a different email id'}, 400
-
+    except:
+        return {'error': 'Invalid Input'}, 400
 
 # Insert medicine to stock
 @app.route('/addmedtostock/', methods=['POST'])
