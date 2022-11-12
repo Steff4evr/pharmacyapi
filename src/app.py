@@ -224,7 +224,7 @@ def auth_register():
         db.session.add(user)
         db.session.commit()
         # Respond to client
-        return UserSchema(exclude=['password']).dump(user), 201
+        return PharmacistSchema(exclude=['password']).dump(user), 201
     except IntegrityError:
         return {'error': 'Email address already in use'}, 409    
 
@@ -266,8 +266,6 @@ def display_medlist():
 # Display purchase orders
 @app.route('/po/')
 def display_po():
-    if not authorize():
-        return {'error': 'You must be a user'},401
     po_schema = PurchaseOrderSchema(many=True)
     # Fetch all the records of the medicines
     po_list = PurchaseOrder.query.order_by(desc(PurchaseOrder.purchaseorder_id)).all()
@@ -306,8 +304,8 @@ def add_med():
     try:
         med = MedicineStock(            
             med_id=request.json['medid'],
-            price_per_unit=request.json['price'],
-            med_dose=request.json['meddose'],
+            price_per_unit=request.json['price'],            
+            quantity=request.json['quantity'],
             description=request.json['description']
         )
         if db.session.query(MedicineList).filter(MedicineList.med_id == med.med_id).count() == 0:
@@ -319,12 +317,13 @@ def add_med():
         return {'Success': 'Successfully committed'}, 201
     except IntegrityError:
         return {'error': 'The medicine that you are trying to add is already present in stock. Try updating the quantity of the existing item in stock'}, 400
-
+    except:
+        return {'error': 'Invalid Input'}, 400
 
 
 # Update medicine  stock
 @app.route('/updatemedicinestock/', methods=['POST'])
-#@jwt_required()
+@jwt_required()
 def update_medicine():
     try:
         med = MedicineStock(
@@ -392,7 +391,8 @@ def purchaseorder():
         return {'Success': 'Successfully committed'}, 201
     except IntegrityError:
         return {'error': ' The Pharmacist ID is incorrect'}, 400
-
+    except:
+        return {'error': 'Invalid Input'}, 400
 
 @app.route('/')
 def index():
