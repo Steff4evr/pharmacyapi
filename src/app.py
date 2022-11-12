@@ -333,10 +333,10 @@ def update_medicine():
             quantity=request.json['quantity']
         )
         # Check if quantity or price is correct.
-        if med.quantity > 0 and med.price_per_unit>0:
+        if med.quantity < 0 or med.price_per_unit < 0:
             return {'Value error': 'The quantity or price has to be valid positve numbers'}, 400
         # Check if the stock record is already present.
-        if db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med.med_stockid).count() > 0 :
+        elif db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med.med_stockid).count() > 0 :
             db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med.med_stockid).update(
                 {MedicineStock.price_per_unit: med.price_per_unit, MedicineStock.quantity: med.quantity}, synchronize_session=False)
         else:
