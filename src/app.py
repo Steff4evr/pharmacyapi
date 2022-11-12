@@ -39,38 +39,47 @@ class Pharmacist(db.Model):
     pharm_rel = db.relationship(
         'PurchaseOrder', backref='purchaseorder', cascade='all, delete-orphan', lazy='dynamic')
 
-#Schema
+# Schema for Pharmacist model
 class PharmacistSchema(ma.Schema):
     class Meta:
-        fields = ('pharmacist_id', 'name', 'emailid', 'password', 'is_admin')
+        fields = ('pharmacist_id', 'name', 'emailid', 'password')
 
-
+# Model for Medincine list table.
+# This table holds the medicine master list and its details
 class MedicineList(db.Model):
+    #table name
     __tablename__ = 'medicinelist'
-
+#Columns in the model
+#primary key
     med_id = db.Column(db.Integer, primary_key=True)
     med_name = db.Column(db.String)
     med_type = db.Column(db.String, nullable=False)
     med_dose = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
+    #Foreign key reference to the med_id
     med_rel = db.relationship(
         'MedicineStock', backref='medicinelist', cascade='all, delete-orphan', lazy='dynamic')
 
-
+# Schema for the MedicineList
 class MedicineListSchema(ma.Schema):
     class Meta:
         fields = ('med_id', 'med_name', 'med_type', 'med_dose', 'description')
 
-
+# Model for MedicineStock
+# This table holds the mdeicine stock information
 class MedicineStock(db.Model):
+    #table name
     __tablename__ = 'medicinestock'
-
+#columns for the tabble
+#primary_key
     med_stockid = db.Column(db.Integer, primary_key=True)
+    #foreign key constraint reference to the med_id field in the medicine list table. This is to ensure that there are no stock other than the medicines from the master list
     med_id = db.Column(db.Integer, db.ForeignKey(
         'medicinelist.med_id'), unique=True, nullable=False)
     quantity = db.Column(db.Numeric, nullable=False)
     price_per_unit = db.Column(db.Numeric, nullable=False)
     description = db.Column(db.String)
+    #foreign key reference to med_stockid
     medstock_rel = db.relationship(
         'PurchaseOrder', backref='purchaseorder1', cascade='all, delete-orphan', lazy='dynamic')
 
