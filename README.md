@@ -35,6 +35,8 @@ Some of the functionalities of ORMs are -
 
 
 
+
+
 # R6	An ERD for your app
 ![MENU](./docs/Pharmacymanagement_ERD.png)
 
@@ -49,10 +51,6 @@ The table represents the medicines that are currently available for sale. Medici
 The table pharmacist, contains the users who will be using the application for managing the pharmacy inventory. Here the pharmacist id is the primary key. It also contains the the fields to store the name of the user along with the emailid and password. Emailid is a unique key that is used for authentication purposes along with the password. The password is encrypted with bcrypt.
 ## PurchaseOrder:
 The table PurchaseOrder contains the purchase order information of each purchase made by customers. Purchaseorder id is the primary key for this table. There is a foreign key reference to the Medicinestock table using the key medicine stockid. This ensures that all medicines that are purchased by customers are part of the inventory. Other fields include, price of the purchased product and the quantity. Price is the price of the item in relation with the quantity.  
-
-# R7	Detail any third party services that your app will use
-
-
 
 # R8	Describe your projects models in terms of the relationships they have with each other
 
@@ -70,40 +68,40 @@ Medicinelist table master table contains the list of the  medicines and their de
 # R10	Describe the way tasks are allocated and tracked in your project
 [Trello](https://trello.com/b/MbLQeqVp/pharmacymanagement)
 
-## ERD Diagram
+### 1 ERD Diagram
 Create the ERD diagram as the first task. Activities includes Identifying the entities and its attributes. The relationships between the entities are defined. Followed by creation of the ERD diagram using any online app.
 
-## Folder Structure 
+### 2 Folder Structure 
 Create appropirate folder structure for the project 
 
-## Environment setup 
+### 3 Environment setup 
 Setup the virtual environment and install the required libraries. Also install the chosen database. Here PostgreSQL database is the one used.
 
-## Create Models and Schemas
+### 4 Create Models and Schemas
 Write code for model and schemas. Write CLI command for creating those tables. Execute those CLI commands to  create the tables in the database.
 
-## Drop Tables
+### 5 Drop Tables
 Write CLI command for drop tables. This is required in case the tables need to be dropped and recreated. 
 
-## Seed the APP Tables
+### 6 Seed the APP Tables
 Write CLI command for seeding the tables with initial records. Execute the CLI commands for inserting the records to the table.
 
-## Endpoints
+### 7 Endpoints
 Identify the the CRUD activities that the APP will perform and decide the endpoints for the APP. 
 
-## Create route function for the endpoints.
+### 8 Create route function for the endpoints.
 Route functons for each CRUD activities identified. 
 
-Display Medicine list
-Display Medicine stock
-Display Purchase order
-User registration
-User login
-Add medicines to stock
-Create purchase order
-Update medicine stock
+Display Medicine list, 
+Display Medicine stock,
+Display Purchase order,
+User registration,
+User login,
+Add medicines to stock,
+Create purchase order,
+Update medicine stock,
 Update pharmacist info
 
-## Documentation
+### Documentation
 Write README documentation and the ensure sufficient comments are presend for the code.
 
