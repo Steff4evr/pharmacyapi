@@ -25,7 +25,7 @@ jwt = JWTManager(app)
 # It contains the Pharmacists that use the pharmacy management system
 
 ################################################################
-#                      MODEL & SCHEMA DEFINITION               #
+#                      MODEL & SCHEMA DEF                      #
 ################################################################
 
 
