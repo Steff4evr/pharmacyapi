@@ -5,13 +5,13 @@
 
 # R1 - Identification of the problem you are trying to solve by building this particular app
 The pharmacy management system app is an app that is designed to manage a pharmacy inventory .
-Pharmacy inventory management is fundamentally required to make the system profitable. By enhancing inventory management, we safeguard the system from becoming disorganized, we are able to understand the market trends better, and employ cost-minimizing strategies. Identifying key trends is essential because for a pharmacy the trend is usually local which may not be the same as that of larger geography. 
+Pharmacy inventory management is fundamentally required to make the system profitable. By enhancing inventory management, we safeguard the system from becoming disorganized, we are able to understand the market trends better, and employ strategies to minimize costs. Identifying key trends is essential because for a pharmacy the trend is usually local which may not be the same as that of larger geography. 
 
-Furthermore, it helps in making accurate projections of what could be the demand for in the times to come. If historical inventory data is recorded and analyzed for a few years, the pharmacy could end up having a sales trend. It can give crucial insights into what will be sold in the future. A robust system of managing inventory helps to maintain accurate shelved stocks and prices. 
+Furthermore, it helps in making accurate projections of what could be the future demand. If historical inventory data is recorded and analyzed for a few years, the pharmacy could end up having a sales trend. It can give crucial insights into what will be sold in the future. A robust system of managing inventory helps to maintain accurate shelved stocks and prices. 
 
 # R2 - Why is it a problem that needs solving
 Poor inventory management systems fail to timely alert and replenish inventory.  Therefore it is important that inventories are managed well. 
-In this way of managing a pharmacy inventory, the pharmacist or the designated person takes a visual survey of the inventory and counts in-hand stock against the product list and quantity. A purchasing order is raised when the stock number falls below the desired listed amount.
+In this way of managing a pharmacy inventory, the pharmacist or the designated person takes a visual survey of the inventory and counts in-hand stock against the product list and quantity. A purchasing order is raised when the stock number falls below the desired listed amount. In this way we can safe gaurd the business from failing altogether. 
 
 # R3 - Why have you chosen this database system. What are the drawbacks compared to others?
 PostgreSQL is cross-platform, so you can run a database server on all major operating systems such as Linux, Windows, and macOS.
@@ -33,9 +33,196 @@ Some of the functionalities of ORMs are -
 
 # R5	Document all endpoints for your API
 
+### /auth/register/
+### Method: POST
+- Arguments: emailid (String,Email ID of pharmacist), password (Sting, Password of the user),name (String,Name of the user)
+- Description: Inserts the new pharmacist.
+- Authentication: @jwt_required()
+- Headers-Authorization: Bearer {Token} - only existing pharmacist can access this route.
+- Request Body: (can include one or all the fields shown below:)
+
+{
+    "emailid": "abcdefghi@gmail.com",
+    "password": "1234abcd",    
+    "name": "cherian"    
+}
+
+{
+    "pharmacist_id": 3,
+    "emailid": "abcdefghi@gmail.com",
+    "name": "cherian"
+}
+
+### /auth/login/
+### Method: POST
+- Arguments: emailid (String,Email ID of pharmacist), password (Sting, Password of the user),name (String,Name of the user)
+- Description: Inserts the new pharmacist.
+- Authentication: @jwt_required()
+- Headers-Authorization: Bearer {Token} - only existing pharmacist can access this route.
+- Request Body: (can include one or all the fields shown below:)
+
+{
+    "emailid":"steffy@pharm.com",
+    "password":"abcd"    
+}
+- Request response:
+- 
+{
+    "email": "steffy@pharm.com",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTY2ODMzMTk5NSwianRpIjoiNzhmZjZkYzgtZGM1OC00YzQ4LTk5ZGEtODc4MWYyYjkxZGNkIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjIiLCJuYmYiOjE2NjgzMzE5OTUsImV4cCI6MTY2ODQxODM5NX0.NwadCylZME_uNAIyZjpDorU9ycwne7i1YlFWftW1Df8"
+}
+
+### /medstock/
+### Method: GET
+- Arguments: None
+- Description: Fetch the medicine stock and display.
+- Authentication: None required
+- Headers-Authorization: None
+- Response :
+
+    {
+        "description": "Paracetamol",
+        "price_per_unit": "1000",
+        "med_stockid": 1,
+        "med_id": 1,
+        "quantity": "1000"
+    },
+
+### /medlist/
+### Method: GET
+- Arguments: None
+- Description: Fetch the medicine master list and display.
+- Authentication: None required
+- Headers-Authorization: None
+- Response :
+
+    {
+        "description": "Paracetamol",
+        "med_id": 1,
+        "med_name": "PANADOL STRIP 10",
+        "med_type": "Paracetamol",
+        "med_dose": "500Mg"
+    }
+
+### /purchaseorder/
+### Method: GET
+- Arguments: None
+- Description: Fetch the purchase order and display.
+- Authentication: None required
+- Headers-Authorization: None
+- Response :
+
+    {
+        "price": "60",
+        "med_stockid": 2,
+        "purchaseorder_id": 18,
+        "quantity": "6",
+        "pharmacist_id": 1
+    }
+
+### /pharmacist/
+### Method: GET
+- Arguments: None
+- Description: Fetch the pharmacist users and display.
+- Authentication: @jwt_required()
+- Headers-Authorization: Bearer {Token} - only existing pharmacist can access this route.
+- Response :
+
+    {
+        "emailid": "steffy@pharm.com",
+        "name": "steffy",
+        "pharmacist_id": 2,
+        "password": "$2b$12$76Bo3eRxvjjtFOuHzG8csey1ksAZhjkygcmKHUqKj0EHEGU/dwSnO"
+    }
+### /updatepharmacistinfo/
+### Method: POST
+- Arguments: pharmacist_id (Numeric, Pharmacist id of the pharmacist ),name (String, Name of the user)
+- Description: Update the Name and email id of the user based on the pharmacist id
+- Authentication: @jwt_required()
+- Headers-Authorization: Bearer {Token} - only existing pharmacist can access this route.
+- Request Body: 
+
+{
+    "pharmacist_id": 1,
+    "name": "Steff"    
+}
+
+- Response
+{
+    "Success": "Successfully committed"
+}
+
+### /addmedtostock/
+### Method: POST
+- Arguments: medid (Numeric, Stockid of the stock ),price_per_unit (Numeric, price per unit of medicine ),quantity (Numeric, quantity of medicine ), discrption (String, desctiption of medicine)
+- Description: Add medicines to stock
+- Authentication: @jwt_required()
+- Headers-Authorization: Bearer {Token} - only existing pharmacist can access this route.
+- Request Body: 
+
+{
+    "medid": "2",
+    "price": 20,    
+    "quantity": "10",
+    "description":"Generic"    
+}
+
+{'Success': 'Stock successfully added'}
+- Request Body
+{
+    "medid": "2",
+    "price": 20,    
+    "quantity": "10",
+    "description":"Generic"    
+}
+
+{
+    "error": "The medicine that you are trying to add is already present in stock. Try updating the quantity of the existing item in stock"
+}
 
 
+### /updatemedicinestock/
+### Method: POST
+- Arguments: stockid (Numeric, Stockid of the stock ),price_per_unit (Numeric, price per unit of medicine ),quantity (Numeric, quantity of medicine )
+- Description: Update the stock information.
+- Authentication: @jwt_required()
+- Headers-Authorization: Bearer {Token} - only existing pharmacist can access this route.
+- Request Body: 
 
+{
+    "stockid": 2,
+    "price_per_unit": 25,    
+    "quantity": 13    
+}
+
+Response:
+
+{
+    "Success": "Successfully Updated the stock"
+}
+
+
+### /createpurchaseorder/
+### Method: POST
+- Arguments: pharmacist_id (Numeric, Pharmacist id of the pharmacist ),quantity (Numeric, quantity of medicine ),medid (Numeric, medicine id)
+- Description: Create purchase order
+- Authentication: @jwt_required()
+- Headers-Authorization: Bearer {Token} - only existing pharmacist can access this route.
+- Request Body: 
+
+    {
+        "medid": 1,
+        "pharmacist_id": "1",
+        "quantity": 10
+    }
+Response :
+    {
+        "pharmacist_id": 1,
+        "price": "10000",
+        "med_stockid": 1,
+        "purchaseorder_id": 26,
+        "quantity": "10"
+    },
 
 # R6	An ERD for your app
 ![MENU](./docs/Pharmacymanagement_ERD.png)
@@ -102,6 +289,6 @@ Create purchase order,
 Update medicine stock,
 Update pharmacist info
 
-### Documentation
+### 9 Documentation
 Write README documentation and the ensure sufficient comments are presend for the code.
 
