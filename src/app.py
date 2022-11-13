@@ -139,6 +139,7 @@ class PurchaseOrderSchema(ma.Schema):
 
 @app.cli.command('createpharmtables')
 def create_db():
+    # Create all the tables
     db.create_all()
     print("Pharmacy Management Tables created")
 
@@ -147,6 +148,7 @@ def create_db():
 
 @app.cli.command('droppharmtables')
 def drop_db():
+    # Drop all tables
     db.drop_all()
     print("Pharmacy Management Tables dropped")
 
@@ -158,8 +160,8 @@ def seed_db():
     pharmacists = [
         Pharmacist(
             pharmacist_id=1,
-            name='admin',
-            emailid='admin@pharm.com',
+            name='user',
+            emailid='user@pharm.com',
             password=bcrypt.generate_password_hash('abcd').decode('utf-8')
         ),
         Pharmacist(
@@ -247,11 +249,12 @@ def seed_db():
         )
 
     ]
-
+# Insert Records into the tables
     db.session.add_all(pharmacists)
     db.session.add_all(medicinelist)
     db.session.add_all(medicinestock)
     db.session.add_all(purchaseorder)
+    # Commit inserts
     db.session.commit()
     print('Tables seeded')
 
@@ -330,7 +333,7 @@ def display_medlist():
 
 
 @app.route('/purchaseorder/')
-def display_po():
+def display_purchaseorder():
     po_schema = PurchaseOrderSchema(many=True)
     # Fetch all the records of the medicines
     po_list = PurchaseOrder.query.order_by(
@@ -341,27 +344,41 @@ def display_po():
     return jsonify(result)
 
 
+@app.route('/pharmacist/')
+@jwt_required()
+def display_pharm():
+    Pharmacist_Schema = PharmacistSchema(many=True)
+    # Fetch all records for medicine stock
+    pharmlist = Pharmacist.query.order_by(Pharmacist.pharmacist_id).all()
+    # Convert the medicine stock data from database into a JSON format and store them in result variable.
+    result = Pharmacist_Schema.dump(pharmlist)
+    # return the data in JSON format
+    return jsonify(result)
+
 # Update Pharmacist information
+
+
 @app.route('/updatepharmacistinfo/', methods=['POST'])
 @jwt_required()
 def update_pharm():
     try:
         pharm = Pharmacist(
             pharmacist_id=request.json['pharmacist_id'],
-            name=request.json['name'],
-            emailid=request.json['email']
+            name=request.json['name']
         )
+        # Query to check if the pharmacist is already present in the database byt filtering based on the pharmacist_id
         if db.session.query(Pharmacist).filter(Pharmacist.pharmacist_id == pharm.pharmacist_id).count() > 0:
+            # FInd the pharmacist that need to updated and update the pharmacist table with new name and emailid
             db.session.query(Pharmacist).filter(Pharmacist.pharmacist_id == pharm.pharmacist_id).update(
-                {Pharmacist.name: pharm.name, Pharmacist.emailid: pharm.emailid}, synchronize_session=False)
+                {Pharmacist.name: pharm.name}, synchronize_session=False)
         else:
+            # Return is no matching record found
             return {'Not_found': 'Matching Pharmacist record was not found'}, 400
         db.session.commit()
         # Respond to client
         return {'Success': 'Successfully committed'}, 201
-    except IntegrityError:
-        return {'error': ' The email id is already in use. Please enter a different email id'}, 400
     except:
+        # Capture other input errors
         return {'error': 'Invalid Input'}, 400
 
 # Add medicine to stock
@@ -378,14 +395,14 @@ def add_med():
             quantity=request.json['quantity'],
             description=request.json['description']
         )
-        # check if the medicine is part of the master list else return with message
+        # check if the medicine is part of the master list else return with message. filter using med_id.
         if db.session.query(MedicineList).filter(MedicineList.med_id == med.med_id).count() == 0:
             return {'Not_found': 'Medicine id is invalid, Please enter a valid medicine that is present in the medicine list'}, 400
         # Add and command the medicine to DB
         db.session.add(med)
         db.session.commit()
         # Respond to client
-        return {'Success': 'Successfully committed'}, 201
+        return {'Success': 'Stock successfully added'}, 201
     except IntegrityError:
         # Raise integrity error if the medicine is already in stock.
         return {'error': 'The medicine that you are trying to add is already present in stock. Try updating the quantity of the existing item in stock'}, 400
@@ -409,7 +426,7 @@ def update_medicine():
             return {'Value error': 'The quantity or price has to be valid positve numbers'}, 400
         # Check if the stock record is already present.
         elif db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med.med_stockid).count() > 0:
-            # update the stock
+            # update the stock after finding the stock record and updating the price per unit and quantity.
             db.session.query(MedicineStock).filter(MedicineStock.med_stockid == med.med_stockid).update(
                 {MedicineStock.price_per_unit: med.price_per_unit, MedicineStock.quantity: med.quantity}, synchronize_session=False)
         else:
@@ -419,14 +436,16 @@ def update_medicine():
         # Respond to client
         return {'Success': 'Successfully Updated the stock'}, 201
     except IntegrityError:
+        # Raise integrity error if the priamry key or foreign key is not satisfied.
         return {'error': 'The values provided is not satifying the integrity constraints'}, 400
     except:
+        # capture other input errors
         return {'error': 'Invalid Input'}, 400
 
 # Add to PurchaseOrder - This endpoint is used to handle customer purchase orders.
 
 
-@app.route('/purchaseorder/', methods=['POST'])
+@app.route('/createpurchaseorder/', methods=['POST'])
 # Only verified users are allowed to create purchaseorder
 @jwt_required()
 def createpurchaseorder():
@@ -437,6 +456,7 @@ def createpurchaseorder():
             price=0,
             quantity=request.json['quantity']
         )
+        po_schema = PurchaseOrderSchema(many=True)
         med_id = request.json['medid']
         # Verify if the Medicine is a valid one. Else return the error message
         if db.session.query(MedicineList).filter(MedicineList.med_id == med_id).count() == 0:
@@ -466,10 +486,15 @@ def createpurchaseorder():
         db.session.add(med)
         db.session.commit()
         # Respond to client
-        return {'Success': 'Successfully committed'}, 201
+        new_po = db.session.query(PurchaseOrder).order_by(
+            desc(PurchaseOrder.purchaseorder_id)).all()
+        result = po_schema.dump(new_po)
+        return jsonify(result), 201
     except IntegrityError:
-        return {'error': ' The Pharmacist ID is incorrect'}, 400
+        # Raise integrity error when the pharmacist id or med id is not valid
+        return {'error': ' The Pharmacist ID or Med id is incorrect'}, 400
     except:
+        # Capture invalid input
         return {'error': 'Invalid Input'}, 400
 
 # Home page of the app
