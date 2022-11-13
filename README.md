@@ -225,7 +225,7 @@ Response :
     },
 
 # R6	An ERD for your app
-![MENU](./docs/Pharmacymanagement_ERD.png)
+![MENU](./docs/Pharmacymanagement_ERD-5.png)
 
 The pharmacy management application is mostly about inventory management. The ERD focusses mainly on the medicine stock and how is it managed. 
 Below are the list of entities and the description :
