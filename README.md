@@ -44,13 +44,13 @@ Some of the functionalities of ORMs are -
 {
     "emailid": "abcdefghi@gmail.com",
     "password": "1234abcd",    
-    "name": "cherian"    
+    "name": "steff"    
 }
 
 {
     "pharmacist_id": 3,
     "emailid": "abcdefghi@gmail.com",
-    "name": "cherian"
+    "name": "steff"
 }
 
 ### /auth/login/
